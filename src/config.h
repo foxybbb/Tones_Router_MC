@@ -1,0 +1,26 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define DEBUG_MODE 0
+
+#define PORT_BOUDRATE 115200
+
+#define DEFAULT_ACELERATION 100
+#define Z_DEFAULT_ACCELERATION 800
+#define DEFAULT_MAX_SPEED 800
+#define Z_DEFAULT_MAX_SPEED 3000
+
+#define X_AXIS 0
+#define Y_AXIS 1
+#define Z_AXIS 2
+
+#define X_ENDSTOP_PIN 9
+#define Y_ENDSTOP_PIN 10
+#define Z_ENDSTOP_PIN 12
+
+
+int STEPS_PER_MM_X = 10;
+int STEPS_PER_MM_Y = 15;
+int STEPS_PER_MM_Z = 400;
+
+#endif // __CONFIG_H__
