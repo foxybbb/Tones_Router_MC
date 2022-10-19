@@ -98,9 +98,6 @@ void G1_Move(double *target){
 
 }
 
-void G28_Move(){
-
-}
 
 void processGCommand(int commandNumber, double *target)
 {
