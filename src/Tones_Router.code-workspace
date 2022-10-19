@@ -1,0 +1,33 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"name": "Tones_Core",
+			"path": "../../Tones_Core"
+		},
+		{
+			"name": "Stepper test",
+			"path": "../../Stepper test"
+		},
+		{
+			"name": "test",
+			"path": "../../test"
+		},
+		{
+			"name": "esp8266",
+			"path": "../../esp8266"
+		},
+		{
+			"name": "Tones_Router_RTOS",
+			"path": "../../Tones_Router_RTOS"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"functional": "cpp",
+			"stepper.h": "c"
+		}
+	}
+}
