@@ -203,99 +203,95 @@ int autoHome()
 }
 int parsing()
 {
-  
-    if (Serial.available() > 0)
-    {
-        double target[] = {0.0, 0.0, 0.0};
-        int codeNumber;
 
-        if (Gparser.AddCharToLine(Serial.read()))
-        {
-            Gparser.ParseLine();
+  if (Serial.available() > 0)
+  {
+    double target[] = {0.0, 0.0, 0.0};
+    int codeNumber;
+
+    if (Gparser.AddCharToLine(Serial.read()))
+    {
+      Gparser.ParseLine();
 
 #if defined(DEBUG_MODE)
-            Serial.print("Command Line: ");
-            Serial.println(Gparser.line);
+      Serial.print("Command Line: ");
+      Serial.println(Gparser.line);
 #endif
 
-            Gparser.RemoveCommentSeparators();
+      Gparser.RemoveCommentSeparators();
 
-            if (Gparser.HasWord('G'))
+      if (Gparser.HasWord('G'))
+      {
+        codeNumber = (int)Gparser.GetWordValue('G');
+        if (Gparser.HasWord('X'))
+          target[X_AXIS] = (double)Gparser.GetWordValue('X');
+        if (Gparser.HasWord('Y'))
+          target[Y_AXIS] = (double)Gparser.GetWordValue('Y');
+        if (Gparser.HasWord('Z'))
+          target[Z_AXIS] = (double)Gparser.GetWordValue('Z');
+
+        procesGCommand(codeNumber, target);
+      }
+      else
+      {
+        if (Gparser.HasWord('M'))
+        {
+          codeNumber = (int)Gparser.GetWordValue('M');
+          switch (codeNumber)
+          {
+          case 104: // Set a new target hot end temperature and continue without waiting.
+                    // The firmware will continue to try to reach and hold the temperature in the background.
+            if (Gparser.HasWord('S'))
             {
-                codeNumber = (int)Gparser.GetWordValue('G');
-                if (Gparser.HasWord('X'))
-                    target[X_AXIS] = (double)Gparser.GetWordValue('X');
-                if (Gparser.HasWord('Y'))
-                    target[Y_AXIS] = (double)Gparser.GetWordValue('Y');
-                if (Gparser.HasWord('Z'))
-                    target[Z_AXIS] = (double)Gparser.GetWordValue('Z');
-
-               
-                    procesGCommand(codeNumber, target);
-                
+              TargetTemperature = (double)Gparser.GetWordValue('S');
+              isHeaterOn = true;
             }
-            else
+            else if (Gparser.HasWord('F'))
+              isHeaterOn = false;
+            break;
+          case 105:
+            Serial.print("M105: ");
+            Serial.println(SlotTemperature);
+            break;
+          case 109:                   // heat and wait need realized
+            if (Gparser.HasWord('S')) // Set target temperature and wait (if heating up)
             {
-                if (Gparser.HasWord('M')) 
-                {
-                    codeNumber = (int)Gparser.GetWordValue('M');
-                    switch (codeNumber)
-                    {
-                    case 104: // Set a new target hot end temperature and continue without waiting. 
-                                 //The firmware will continue to try to reach and hold the temperature in the background.
-                        if (Gparser.HasWord('S'))
-                        {
-                            TargetTemperature = (double)Gparser.GetWordValue('S');
-                            isHeaterOn = true;
-                        }
-                        else if (Gparser.HasWord('F'))
-                            isHeaterOn = false;
-                        break;
-                    case 105:
-                        Serial.print("M105: ");
-                        Serial.println(SlotTemperature);
-                        break;
-                    case 109: // heat and wait need realized
-                        if (Gparser.HasWord('S'))  // Set target temperature and wait (if heating up)
-                        {
-                            TargetTemperature = (double)Gparser.GetWordValue('S');
-                            isHeaterOn = true;
-                        }
-                        else if (Gparser.HasWord('R')) //Set target temperature, wait even if cooling
-                        {
-                            
-                            TargetTemperature = (double)Gparser.GetWordValue('R');
-                        }
-                        else if (Gparser.HasWord('F'))
-                            isHeaterOn = false;
-                        break;
-                    case 114:
-                        Serial.print("M114: ");
-                        Serial.print("X:");
-                        Serial.print(target[X_AXIS]);
-                        Serial.print("Y:");
-                        Serial.print(target[Y_AXIS]);
-                        Serial.print("Z:");
-                        Serial.println(target[Z_AXIS]);
-                        break;
-                    case 112: // huts down the machine, turns off all the steppers and heaters, and if possible, turns off the power supply. A reset is required to return to operational mode.
-                            // emergency stopping
-                        motorX.brake();
-                        motorY.brake();
-                        motorZ.brake();
-                    break;
-                    default:
-                        Serial.println("Error: Unknown M Command");
-                        break;
-
-                      
-                    }
-                }
-                else
-                    Serial.println("Error: Unknown Command");
+              TargetTemperature = (double)Gparser.GetWordValue('S');
+              isHeaterOn = true;
             }
+            else if (Gparser.HasWord('R')) // Set target temperature, wait even if cooling
+            {
+
+              TargetTemperature = (double)Gparser.GetWordValue('R');
+            }
+            else if (Gparser.HasWord('F'))
+              isHeaterOn = false;
+            break;
+          case 114:
+            Serial.print("M114: ");
+            Serial.print("X:");
+            Serial.print(target[X_AXIS]);
+            Serial.print("Y:");
+            Serial.print(target[Y_AXIS]);
+            Serial.print("Z:");
+            Serial.println(target[Z_AXIS]);
+            break;
+          case 112: // huts down the machine, turns off all the steppers and heaters, and if possible, turns off the power supply. A reset is required to return to operational mode.
+                    // emergency stopping
+            motorX.brake();
+            motorY.brake();
+            motorZ.brake();
+            break;
+          default:
+            Serial.println("Error: Unknown M Command");
+            break;
+          }
         }
+        else
+          Serial.println("Error: Unknown Command");
+      }
     }
+  }
 }
 
 int moveAxisTo(double *target)
@@ -340,7 +336,7 @@ int procesGCommand(int commandNumber, double *target)
 {
   switch (commandNumber)
   {
-    
+
   case 0:
     return moveAxisTo(target);
     Serial.println("G0:OK");
@@ -361,7 +357,4 @@ int procesGCommand(int commandNumber, double *target)
 
 int procesMCommand(int code)
 {
-   
-    
-
 }
