@@ -34,7 +34,9 @@ void setup()
   // reverse each motor
   motorX.reverse(true);
   motorY.reverse(true);
+
   // set acleration and max speed for each axis
+  // Ускорение = const
   motorX.setAcceleration(DEFAULT_ACELERATION);
   motorY.setAcceleration(DEFAULT_ACELERATION);
   motorZ.setAcceleration(Z_DEFAULT_ACCELERATION);
@@ -46,6 +48,7 @@ void setup()
 
   state = State::UNKNOWN_POSITION;
 
+  // Ports settings
   pinMode(LIMSW_X_PIN, INPUT);
   pinMode(LIMSW_Y_PIN, INPUT);
   pinMode(LIMSW_Z_PIN, INPUT);
@@ -66,7 +69,6 @@ void setup()
 
 void loop()
 {
-
   parsing();
 }
 
@@ -79,8 +81,6 @@ void G0_Move(double *target)
   motorX.setTarget(stepsToMM_X(target[X_AXIS]));
   motorY.setTarget(stepsToMM_Y(target[Y_AXIS]));
   motorZ.setTarget(stepsToMM_Z(target[Z_AXIS]));
-  
-
 }
 
 void G1_Move(double *target){
@@ -179,14 +179,17 @@ void parsing()
 
     int codeNumber;
 
+    // Get lines
     if (Gparser.AddCharToLine(Serial.read()))
     {
       Gparser.ParseLine();
 
+        // Del cooments
       Gparser.RemoveCommentSeparators();
 
       if (Gparser.HasWord('G'))
       {
+        //G1X100Y100Z234
         codeNumber = (int)Gparser.GetWordValue('G');
         if (Gparser.HasWord('X'))
           target[X_AXIS] = (double)Gparser.GetWordValue('X');
@@ -199,6 +202,8 @@ void parsing()
       }
       else
       {
+        // M-commands (M(дополнительные) and G(основные) commands)
+        // Settings, pos, temperature
         if (Gparser.HasWord('M'))
         {
           codeNumber = (int)Gparser.GetWordValue('M');
@@ -219,17 +224,17 @@ void parsing()
             Serial.println(SlotTemperature);
             break;
           case 109:                   // heat and wait need realized
-            if (Gparser.HasWord('S')) // Set target temperature and wait (if heating up)
+            if (Gparser.HasWord('S')) // Set target temperature and wait (if heating up)cНагрев
             {
               TargetTemperature = (double)Gparser.GetWordValue('S');
               isHeaterOn = true;
             }
-            else if (Gparser.HasWord('R')) // Set target temperature, wait even if cooling
+            else if (Gparser.HasWord('R')) // Set target temperature, wait even if cooling ждать когда охлодится
             {
 
               TargetTemperature = (double)Gparser.GetWordValue('R');
             }
-            else if (Gparser.HasWord('F'))
+            else if (Gparser.HasWord('F')) // Off
               isHeaterOn = false;
             break;
           case 114:
