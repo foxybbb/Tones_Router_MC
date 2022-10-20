@@ -6,7 +6,6 @@ void G0_Move(GStepper<STEPPER2WIRE> &motorX,GStepper<STEPPER2WIRE> &motorY,GStep
 
 void G1_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GStepper<STEPPER2WIRE> &motorZ, double *target);
 
-
 void G28_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GStepper<STEPPER2WIRE> &motorZ);
 
 

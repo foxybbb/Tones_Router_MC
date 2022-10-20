@@ -7,52 +7,112 @@
 #include "config.h"
 #include "tones_types.h"
 
-double SlotTemperature;
-double TargetTemperature;
-bool isHeaterOn = 0;
-bool isOnTarget = 0;
-GCodeParser Gparser = GCodeParser();
-GStepper<STEPPER2WIRE> motorX(400, 2, 5, 8);
-GStepper<STEPPER2WIRE> motorY(400, 3, 6, 8);
-GStepper<STEPPER2WIRE> motorZ(200, 4, 7, 8);
+using GParser = GCodeParser;
+using Motor = GStepper<STEPPER2WIRE>;
 
-// GyverPID slotTemp(5, 0.05, 0);
-// GyverNTC therm(A3, 100000, 3950);
+struct {
+  double SlotTemperature;
+  double TargetTemperature;
 
-State state = State::UNKNOWN_POSITION;
+  bool isHeaterOn = 0;
+  bool isOnTarget = 0;
+} Temperature;
 
-double target[] = {0.0, 0.0, 0.0};
+/*class Motors{
+private:
+  // For readable
+  using Motor = GStepper<STEPPER2WIRE>;
 
+  // Empty memory
+  Motor* motorX = nullptr;
+  Motor* motorY = nullptr;
+  Motor* motorZ = nullptr;
+
+public:
+  Motors() {
+    defaultSettings();
+  }
+
+  void defaultSettings() {
+    motorX = new Motor(400, 2, 5, 8);
+    motorY = new Motor(400, 3, 6, 8);
+    motorZ = new Motor(200, 4, 7, 8);
+  }
+
+  // Empty memory
+  ~Motors() {
+    if(motorX) delete motorX;
+    if(motorY) delete motorY;
+    if(motorZ) delete motorZ;
+  }
+
+  // Are not used yet
+  void setMotorX(int stepsPerRev = 400, uint8_t pin1 = 2, uint8_t pin2 = 5, uint8_t pin3 = 8);
+  void setMotorY(int stepsPerRev = 400, uint8_t pin1 = 3, uint8_t pin2 = 6, uint8_t pin3 = 8);
+  void setMotorZ(int stepsPerRev = 200, uint8_t pin1 = 4, uint8_t pin2 = 7, uint8_t pin3 = 8);
+
+  // get any motor to work with it
+  Motor* getMotorX() const {
+    return motorX;
+  }
+  Motor* getMotorY() const {
+    return motorY;
+  }
+  Motor* getMotorZ() const {
+    return motorZ;
+  }
+};
+*/
+
+State STATE = State::UNKNOWN_POSITION;
+
+double TARGET[] = {0.0, 0.0, 0.0};
+
+// contain in static memory
+static GParser Gparser = GCodeParser();
+
+static Motor motorX(400, 2, 5, 8);
+static Motor motorY(400, 3, 6, 8);
+static Motor motorZ(200, 4, 7, 8);
+
+// parsing
 void parsing();
-int procesGCommand(int commandNumber, double *target);
 
+// Fills target container by X,Y,Z values
+void setTargetPosition();
+
+// Setup settings
+void setupReverse();
+void setupAcceleration();
+void setupMaxSpeed();
+void setupPinMode();
+
+// Checks if the command is there
+bool isCommand(char command);
+
+// Get a value after big chars
+double getCommandValue(char command);
+
+// Cpommands
+int procesGCommand(int commandNumber, double *target);
 int procesMCommand(char *str[]);
+
 void setup()
 {
+  STATE = State::UNKNOWN_POSITION;
   Serial.begin(PORT_BOUDRATE);
 
   // reverse each motor
-  motorX.reverse(true);
-  motorY.reverse(true);
+  setupReverse();
 
   // set acleration and max speed for each axis
-  // Ускорение = const
-  motorX.setAcceleration(DEFAULT_ACELERATION);
-  motorY.setAcceleration(DEFAULT_ACELERATION);
-  motorZ.setAcceleration(Z_DEFAULT_ACCELERATION);
+  setupAcceleration();
 
   // set max speed for each axis
-  motorX.setMaxSpeed(DEFAULT_MAX_SPEED);
-  motorY.setMaxSpeed(DEFAULT_MAX_SPEED);
-  motorZ.setMaxSpeed(Z_DEFAULT_MAX_SPEED);
-
-  state = State::UNKNOWN_POSITION;
+  setupMaxSpeed();
 
   // Ports settings
-  pinMode(LIMSW_X_PIN, INPUT);
-  pinMode(LIMSW_Y_PIN, INPUT);
-  pinMode(LIMSW_Z_PIN, INPUT);
-
+  setupPinMode();
   // slotTemp.setDirection(NORMAL); // Heat
   // slotTemp.setLimits(0, 255); // ограничение шим
 
@@ -64,12 +124,96 @@ void setup()
   
   Serial.println("Setup:OK");
 }
-
-
-
 void loop()
 {
   parsing();
+}
+void parsing()
+{
+  if (Serial.available() > 0)
+  {
+
+    int codeNumber;
+
+    // Get lines
+    if (Gparser.AddCharToLine(Serial.read()))
+    {
+      Gparser.ParseLine();
+
+        // Del cooments
+      Gparser.RemoveCommentSeparators();
+
+      if (isCommand('G'))
+      {
+        //G1X100Y100Z234
+        codeNumber = (int)getCommandValue('G');
+
+        setTargetPosition();
+
+        procesGCommand(codeNumber, TARGET);
+      }
+      else
+      {
+        // M-commands (M(дополнительные) and G(основные) commands)
+        // Settings, pos, temperature
+        if (isCommand('M'))
+        {
+          codeNumber = (int)getCommandValue('M');
+          switch (codeNumber)
+          {
+          case 104: // Set a new target hot end temperature and continue without waiting.
+                    // The firmware will continue to try to reach and hold the temperature in the background.
+            if (isCommand('S'))
+            {
+              Temperature.TargetTemperature = getCommandValue('S');
+              Temperature.isHeaterOn = true;
+            }
+            else if (isCommand('F'))
+              Temperature.isHeaterOn = false;
+            break;
+          case 105:
+            Serial.print("M105: ");
+            Serial.println(Temperature.SlotTemperature);
+            break;
+          case 109:                   // heat and wait need realized
+            if (isCommand('S')) // Set target temperature and wait (if heating up)cНагрев
+            {
+              Temperature.TargetTemperature = getCommandValue('S');
+              Temperature.isHeaterOn = true;
+            }
+            else if (isCommand('R')) // Set target temperature, wait even if cooling ждать когда охлодится
+            {
+
+              Temperature.TargetTemperature = getCommandValue('R');
+            }
+            else if (isCommand('F')) // Off
+              Temperature.isHeaterOn = false;
+            break;
+          case 114:
+            Serial.print("M114: ");
+            Serial.print("X:");
+            Serial.print(TARGET[X_AXIS]);
+            Serial.print("Y:");
+            Serial.print(TARGET[Y_AXIS]);
+            Serial.print("Z:");
+            Serial.println(TARGET[Z_AXIS]);
+            break;
+          case 112: // huts down the machine, turns off all the steppers and heaters, and if possible, turns off the power supply. A reset is required to return to operational mode.
+                    // emergency stopping
+            motorX.brake();
+            motorY.brake();
+            motorZ.brake();
+            break;
+          default:
+            Serial.println("Error: Unknown M Command");
+            break;
+          }
+        }
+        else
+          Serial.println("Error: Unknown Command");
+      }
+    }
+  }
 }
 
 void G0_Move(double *target)
@@ -82,9 +226,8 @@ void G0_Move(double *target)
   motorY.setTarget(stepsToMM_Y(target[Y_AXIS]));
   motorZ.setTarget(stepsToMM_Z(target[Z_AXIS]));
 }
-
 void G1_Move(double *target){
-   state = State::MOVING;
+    STATE = State::MOVING;
     motorX.setRunMode(FOLLOW_POS);
     motorY.setRunMode(FOLLOW_POS);
     motorZ.setRunMode(FOLLOW_POS);
@@ -108,12 +251,9 @@ void G1_Move(double *target){
     {
       
     }
-    state = State::IDLE;
+    STATE = State::IDLE;
 
 }
-
-
-
 void G28_Move()
 {
   motorZ.setRunMode(KEEP_SPEED);
@@ -172,98 +312,6 @@ void G28_Move()
   motorY.reset();
 }
 
-void parsing()
-{
-  if (Serial.available() > 0)
-  {
-
-    int codeNumber;
-
-    // Get lines
-    if (Gparser.AddCharToLine(Serial.read()))
-    {
-      Gparser.ParseLine();
-
-        // Del cooments
-      Gparser.RemoveCommentSeparators();
-
-      if (Gparser.HasWord('G'))
-      {
-        //G1X100Y100Z234
-        codeNumber = (int)Gparser.GetWordValue('G');
-        if (Gparser.HasWord('X'))
-          target[X_AXIS] = (double)Gparser.GetWordValue('X');
-        if (Gparser.HasWord('Y'))
-          target[Y_AXIS] = (double)Gparser.GetWordValue('Y');
-        if (Gparser.HasWord('Z'))
-          target[Z_AXIS] = (double)Gparser.GetWordValue('Z');
-
-        procesGCommand(codeNumber, target);
-      }
-      else
-      {
-        // M-commands (M(дополнительные) and G(основные) commands)
-        // Settings, pos, temperature
-        if (Gparser.HasWord('M'))
-        {
-          codeNumber = (int)Gparser.GetWordValue('M');
-          switch (codeNumber)
-          {
-          case 104: // Set a new target hot end temperature and continue without waiting.
-                    // The firmware will continue to try to reach and hold the temperature in the background.
-            if (Gparser.HasWord('S'))
-            {
-              TargetTemperature = (double)Gparser.GetWordValue('S');
-              isHeaterOn = true;
-            }
-            else if (Gparser.HasWord('F'))
-              isHeaterOn = false;
-            break;
-          case 105:
-            Serial.print("M105: ");
-            Serial.println(SlotTemperature);
-            break;
-          case 109:                   // heat and wait need realized
-            if (Gparser.HasWord('S')) // Set target temperature and wait (if heating up)cНагрев
-            {
-              TargetTemperature = (double)Gparser.GetWordValue('S');
-              isHeaterOn = true;
-            }
-            else if (Gparser.HasWord('R')) // Set target temperature, wait even if cooling ждать когда охлодится
-            {
-
-              TargetTemperature = (double)Gparser.GetWordValue('R');
-            }
-            else if (Gparser.HasWord('F')) // Off
-              isHeaterOn = false;
-            break;
-          case 114:
-            Serial.print("M114: ");
-            Serial.print("X:");
-            Serial.print(target[X_AXIS]);
-            Serial.print("Y:");
-            Serial.print(target[Y_AXIS]);
-            Serial.print("Z:");
-            Serial.println(target[Z_AXIS]);
-            break;
-          case 112: // huts down the machine, turns off all the steppers and heaters, and if possible, turns off the power supply. A reset is required to return to operational mode.
-                    // emergency stopping
-            motorX.brake();
-            motorY.brake();
-            motorZ.brake();
-            break;
-          default:
-            Serial.println("Error: Unknown M Command");
-            break;
-          }
-        }
-        else
-          Serial.println("Error: Unknown Command");
-      }
-    }
-  }
-}
-
 int procesGCommand(int commandNumber, double *target)
 {
   switch (commandNumber)
@@ -285,4 +333,51 @@ int procesGCommand(int commandNumber, double *target)
     break;
   }
   return 0;
+}
+
+// Fills target container by X,Y,Z values
+void setTargetPosition() {
+        if (Gparser.HasWord('X'))
+          TARGET[X_AXIS] = getCommandValue('X');
+        if (Gparser.HasWord('Y'))
+          TARGET[Y_AXIS] = getCommandValue('Y');
+        if (Gparser.HasWord('Z'))
+          TARGET[Z_AXIS] = getCommandValue('Z');
+}
+
+// Checks if the command is there
+bool isCommand(char command) {
+  return Gparser.HasWord(command);
+}
+
+// Get a value after big chars
+double getCommandValue(char command){
+  //(double)Gparser.GetWordValue('S')
+  return Gparser.GetWordValue(command);
+}
+
+// Setup settings
+void setupReverse() {
+  // reverse each motor
+  motorX.reverse(true);
+  motorY.reverse(true);
+}
+void setupAcceleration() {
+   // set acleration and max speed for each axis
+  // Ускорение = const
+  motorX.setAcceleration(DEFAULT_ACELERATION);
+  motorY.setAcceleration(DEFAULT_ACELERATION);
+  motorZ.setAcceleration(Z_DEFAULT_ACCELERATION);
+}
+void setupMaxSpeed() {
+  // set max speed for each axis
+  motorX.setMaxSpeed(DEFAULT_MAX_SPEED);
+  motorY.setMaxSpeed(DEFAULT_MAX_SPEED);
+  motorZ.setMaxSpeed(Z_DEFAULT_MAX_SPEED);
+}
+void setupPinMode() {
+  // Ports settings
+  pinMode(LIMSW_X_PIN, INPUT);
+  pinMode(LIMSW_Y_PIN, INPUT);
+  pinMode(LIMSW_Z_PIN, INPUT);
 }
