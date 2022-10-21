@@ -9,7 +9,7 @@ enum State
   WAITING,
   DONE,
   UNKNOWN_POSITION
-};
+} STATE;
 
 
 #endif // __TONES_TYPES_H__
