@@ -64,9 +64,9 @@ public:
 };
 */
 
-State STATE = State::UNKNOWN_POSITION;
+static State STATE = State::UNKNOWN_POSITION;
 
-double TARGET[] = {0.0, 0.0, 0.0};
+static double TARGET[] = {0.0, 0.0, 0.0};
 
 // contain in static memory
 static GParser Gparser = GCodeParser();
