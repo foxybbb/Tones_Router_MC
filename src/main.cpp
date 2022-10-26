@@ -8,7 +8,7 @@
 #include "tones_types.h"
 #include "config.h"
 #include "parser.h"
-
+#include "setup.h"
 /*class Motors{
 private:
   // For readable
@@ -55,6 +55,9 @@ public:
 };
 */
 
+
+
+
 // Cpommands
 int procesMCommand(char *str[]);
 
@@ -62,6 +65,9 @@ void setup()
 {
   STATE = UNKNOWN_POSITION;
   Serial.begin(PORT_BOUDRATE);
+  
+  setupTimer();
+  setupHeter();
 
   setupReverse();
   setupAcceleration();
@@ -69,8 +75,7 @@ void setup()
   setupPinMode();
 
   Serial.println("Setup:OK");
-  // slotTemp.setDirection(NORMAL); // Heat
-  // slotTemp.setLimits(0, 255); // ограничение шим
+  
 
   // slotTemp.setpoint = 70;
 

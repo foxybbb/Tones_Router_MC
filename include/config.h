@@ -12,6 +12,9 @@
 #define Y_AXIS 1
 #define Z_AXIS 2
 
+#define MOS_PIN 3
+#define THERM_PIN 0
+
 // Macros
 #define stepsToMM_X(x) ((x)*10)
 #define stepsToMM_Y(x) ((x)*15)
