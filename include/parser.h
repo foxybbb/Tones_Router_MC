@@ -6,6 +6,7 @@
 #include "motor.h"
 #include "temperature.h"
 
+
 void parsing()
 {
 if (Serial.available() > 0)
@@ -93,5 +94,6 @@ if (Serial.available() > 0)
     }
   }  
 }
+
 
 #endif // __PARSER_H__

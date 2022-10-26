@@ -1,8 +1,7 @@
 #ifndef __TONES_TYPES_H__
 #define __TONES_TYPES_H__
 
-enum State
-{
+enum {
   IDLE,
   MOVING,
   HOMING,
