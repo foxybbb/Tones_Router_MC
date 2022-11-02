@@ -37,6 +37,7 @@ void setupPinMode() {
   pinMode(LIMSW_X_PIN, INPUT);
   pinMode(LIMSW_Y_PIN, INPUT);
   pinMode(LIMSW_Z_PIN, INPUT);
+  pinMode(HEATER_RELAY_PIN,OUTPUT);
 }
 
 void G0_Move(double *target)

@@ -46,9 +46,14 @@ if (Serial.available() > 0)
             {
               Temperature.TargetTemperature = getCommandValue('S');
               Temperature.isHeaterOn = true;
+              Timer1.restart();
             }
-            else if (isCommand('F'))
+            else if (isCommand('F')){
               Temperature.isHeaterOn = false;
+              digitalWrite(HEATER_RELAY_PIN, LOW);
+              Timer1.stop();
+            }
+              
             break;
           case 105:
             Serial.print("M105: ");

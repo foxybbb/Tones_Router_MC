@@ -5,8 +5,9 @@ struct {
   double SlotTemperature;
   double TargetTemperature;
 
+
   bool isHeaterOn = 0;
-  bool isOnTarget = 0;
+
 } Temperature;
 
 

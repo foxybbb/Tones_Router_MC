@@ -29,4 +29,9 @@
 #define LIMSW_Y_PIN 10
 #define LIMSW_Z_PIN 12
 
+
+#define ONE_WIRE_BUS 17   // A3 
+
+#define HEATER_RELAY_PIN 14414
+
 #endif // __CONFIG_H__
