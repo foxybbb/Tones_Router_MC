@@ -12,7 +12,7 @@
 #define Y_AXIS 1
 #define Z_AXIS 2
 
-#define MOS_PIN 3
+#define MOS_PIN 11
 #define THERM_PIN 0
 
 // Macros
@@ -30,8 +30,8 @@
 #define LIMSW_Z_PIN 12
 
 
-#define ONE_WIRE_BUS 17   // A3 
+#define ONE_WIRE_BUS A3   // A3 
 
-#define HEATER_RELAY_PIN 14414
+#define HEATER_RELAY_PIN 14
 
 #endif // __CONFIG_H__

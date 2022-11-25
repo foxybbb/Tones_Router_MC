@@ -1,14 +1,13 @@
 #ifndef __TEMPERATURE_H__
 #define __TEMPERATURE_H__
 
-struct {
+struct
+{
   double SlotTemperature;
   double TargetTemperature;
 
-
-  bool isHeaterOn = 0;
-
+  bool isHeaterOn = false;
+  bool isCompleted = false;
 } Temperature;
-
 
 #endif // __TEMPERATURE_H__

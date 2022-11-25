@@ -6,10 +6,9 @@
 #include "motor.h"
 #include "temperature.h"
 
-
 void parsing()
 {
-if (Serial.available() > 0)
+  if (Serial.available() > 0)
   {
 
     int codeNumber;
@@ -19,12 +18,12 @@ if (Serial.available() > 0)
     {
       Gparser.ParseLine();
 
-        // Del cooments
+      // Del cooments
       Gparser.RemoveCommentSeparators();
 
       if (isCommand('G'))
       {
-        //G1X100Y100Z234
+        // G1X100Y100Z234
         codeNumber = (int)getCommandValue('G');
 
         setTargetPosition();
@@ -45,33 +44,54 @@ if (Serial.available() > 0)
             if (isCommand('S'))
             {
               Temperature.TargetTemperature = getCommandValue('S');
+              if (Temperature.TargetTemperature > 100 || Temperature.TargetTemperature < 0)
+              {
+                Serial.println("M104: Temperature Range Error");
+                break;
+              }
+              digitalWrite(HEATER_RELAY_PIN, HIGH);
               Temperature.isHeaterOn = true;
+              
               Timer1.restart();
+              Serial.println("M104: OK");
             }
-            else if (isCommand('F')){
+            else if (isCommand('F'))
+            {
               Temperature.isHeaterOn = false;
+              Temperature.TargetTemperature = 0;
               digitalWrite(HEATER_RELAY_PIN, LOW);
               Timer1.stop();
             }
-              
+
             break;
           case 105:
             Serial.print("M105: ");
             Serial.println(Temperature.SlotTemperature);
             break;
-          case 109:                   // heat and wait need realized
+          case 109:             // heat and wait need realized
             if (isCommand('S')) // Set target temperature and wait (if heating up)cНагрев
             {
               Temperature.TargetTemperature = getCommandValue('S');
+              if (Temperature.TargetTemperature > 100 || Temperature.TargetTemperature < 0)
+              {
+                Serial.println("M104: Temperature Range Error");
+                break;
+              }
+              digitalWrite(HEATER_RELAY_PIN, HIGH);
               Temperature.isHeaterOn = true;
+              while (!Temperature.isCompleted)
+              {
+              }
+              Serial.println("M104:OK");
             }
             else if (isCommand('R')) // Set target temperature, wait even if cooling ждать когда охлодится
             {
-
               Temperature.TargetTemperature = getCommandValue('R');
             }
             else if (isCommand('F')) // Off
               Temperature.isHeaterOn = false;
+            Temperature.TargetTemperature = 0;
+            digitalWrite(HEATER_RELAY_PIN, HIGH);
             break;
           case 114:
             Serial.print("M114: ");
@@ -97,8 +117,7 @@ if (Serial.available() > 0)
           Serial.println("Error: Unknown Command");
       }
     }
-  }  
+  }
 }
-
 
 #endif // __PARSER_H__
