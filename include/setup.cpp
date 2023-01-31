@@ -15,8 +15,28 @@ GyverPID slotHeater(10.43, 123, 12);
 
 ISR(TIMER1_A)
 {
+
   sensors.requestTemperatures();
   Temperature.SlotTemperature = sensors.getTempCByIndex(0);
+
+  if (Temperature.temperatureCount >= 20)
+  {
+    Temperature.maxTemperature = 0;
+    Temperature.minTemperature = INT16_MAX;
+    Temperature.temperatureCount = 0;
+  }
+
+  if (Temperature.SlotTemperature > Temperature.maxTemperature)
+  {
+    Temperature.maxTemperature = Temperature.SlotTemperature;
+  }
+  else if (Temperature.SlotTemperature < Temperature.minTemperature)
+  {
+    Temperature.minTemperature = Temperature.SlotTemperature;
+  }
+  if(Temperature.maxTemperature - Temperature.minTemperature <= 5.00){
+    Temperature.isCompleted = true;
+  }
   slotHeater.input = Temperature.SlotTemperature;
 
   analogWrite(MOS_PIN, slotHeater.getResult());
@@ -30,6 +50,8 @@ ISR(TIMER1_A)
   {
     Temperature.isCompleted = false;
   }
+
+  Temperature.temperatureCount++;
 }
 
 void setupTimer()

@@ -72,13 +72,10 @@ void parsing()
             if (isCommand('S')) // Set target temperature and wait (if heating up)cНагрев
             {
               Temperature.TargetTemperature = getCommandValue('S');
-              if (Temperature.TargetTemperature > 100 || Temperature.TargetTemperature < 0)
-              {
-                Serial.println("M104: Temperature Range Error");
-                break;
-              }
+              
               digitalWrite(HEATER_RELAY_PIN, HIGH);
               Temperature.isHeaterOn = true;
+              Temperature.isCompleted = false;
               while (!Temperature.isCompleted)
               {
               }

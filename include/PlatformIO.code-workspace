@@ -6,6 +6,10 @@
 		{
 			"name": "Tones_Router_MC",
 			"path": ".."
+		},
+		{
+			"name": "led_segment_rgb",
+			"path": "../../Projects/led_segment_rgb"
 		}
 	],
 	"settings": {}

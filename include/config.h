@@ -25,8 +25,8 @@
 #define DEFAULT_MAX_SPEED 800
 #define Z_DEFAULT_MAX_SPEED 3000
 
-#define LIMSW_X_PIN 9
-#define LIMSW_Y_PIN 10
+#define LIMSW_X_PIN 10
+#define LIMSW_Y_PIN 9
 #define LIMSW_Z_PIN 12
 
 
