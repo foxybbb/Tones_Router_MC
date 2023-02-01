@@ -1,8 +1,7 @@
 #include "gcode_comands.h"
-#include <GyverStepper.h>
-#include <Arduino.h>
 
-void G0_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GStepper<STEPPER2WIRE> &motorZ, double *target)
+
+void G0_Move(Motor &motorX, Motor &motorY, Motor &motorZ, double *target)
 {
   motorX.setRunMode(FOLLOW_POS);
   motorY.setRunMode(FOLLOW_POS);
@@ -12,12 +11,10 @@ void G0_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GSt
   motorY.setTarget(stepsToMM_Y(target[Y_AXIS]));
   motorX.setTarget(stepsToMM_Z(target[Z_AXIS]));
 }
-
-void G1_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GStepper<STEPPER2WIRE> &motorZ, double *target)
+void G1_Move(Motor &motorX, Motor &motorY, Motor &motorZ, double *target)
 {
 }
-
-void G28_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GStepper<STEPPER2WIRE> &motorZ)
+void G28_Move(Motor &motorX, Motor &motorY, Motor &motorZ)
 {
   motorZ.setRunMode(KEEP_SPEED);
   motorZ.setSpeed(1000);
@@ -31,3 +28,4 @@ void G28_Move(GStepper<STEPPER2WIRE> &motorX, GStepper<STEPPER2WIRE> &motorY, GS
   }
   motorZ.reset();
 }
+
